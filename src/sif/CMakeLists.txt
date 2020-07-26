@@ -1,4 +1,16 @@
-file(GLOB headers ${valhalla_SOURCE_DIR}/valhalla/sif/*.h)
+set(headers ${valhalla_SOURCE_DIR}/valhalla/sif/autocost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/bicyclecost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/costconstants.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/costfactory.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/dynamiccost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/edgelabel.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/hierarchylimits.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/motorcyclecost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/motorscootercost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/nocost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/pedestriancost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/transitcost.h
+            ${valhalla_SOURCE_DIR}/valhalla/sif/truckcost.h)
 
 set(sources
   autocost.cc
@@ -15,16 +27,9 @@ set(sources
 valhalla_module(NAME sif
   SOURCES ${sources}
   HEADERS ${headers}
-  INCLUDE_DIRECTORIES
-    PUBLIC
-      ${valhalla_SOURCE_DIR}
-      ${valhalla_SOURCE_DIR}/valhalla
-      ${valhalla_SOURCE_DIR}/third_party/date/include
-      $<$<BOOL:${MSVC}>:${valhalla_SOURCE_DIR}/third_party/dirent/include>
-    PRIVATE
-      ${valhalla_SOURCE_DIR}/third_party/rapidjson/include
   DEPENDS
     valhalla::baldr
     valhalla::proto
-    ${valhalla_protobuf_targets}
+    date
+    rapidjson
     Boost::boost)

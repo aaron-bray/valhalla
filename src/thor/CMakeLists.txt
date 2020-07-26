@@ -1,4 +1,23 @@
-file(GLOB headers ${valhalla_SOURCE_DIR}/valhalla/thor/*.h)
+set(headers
+    ${valhalla_SOURCE_DIR}/valhalla/thor/astar.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/astarheuristic.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/attributes_controller.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/bidirectional_astar.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/costmatrix.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/dijkstras.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/edgestatus.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/isochrone.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/map_matcher.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/multimodal.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/optimizer.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/pathalgorithm.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/pathinfo.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/route_matcher.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/timedep.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/timedistancematrix.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/trafficalgorithm.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/triplegbuilder.h
+    ${valhalla_SOURCE_DIR}/valhalla/thor/worker.h)
 
 set(sources
   astar.cc
@@ -26,21 +45,13 @@ set(sources
 valhalla_module(NAME thor
   SOURCES ${sources}
   HEADERS ${headers}
-  INCLUDE_DIRECTORIES
-    PUBLIC
-      ${valhalla_SOURCE_DIR}
-      ${valhalla_SOURCE_DIR}/valhalla
-      ${valhalla_SOURCE_DIR}/third_party/date/include
-      $<$<BOOL:${MSVC}>:${valhalla_SOURCE_DIR}/third_party/dirent/include>
-    PRIVATE
-      ${valhalla_SOURCE_DIR}/third_party/rapidjson/include
-      ${CMAKE_BINARY_DIR}
   DEPENDS
     valhalla::proto
     valhalla::sif
     valhalla::meili
-    ${valhalla_protobuf_targets}
+    date
+    rapidjson
+    robin_hood
     Boost::boost
-    libprime_server
-  BUILD_DEPENDS
-    robin_hood::robin_hood)
+  #VERBOSE
+)

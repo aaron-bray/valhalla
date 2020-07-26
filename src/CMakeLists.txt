@@ -1,4 +1,3 @@
-include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -43,8 +42,9 @@ function (cxx_add_warning_flags target)
 endfunction()
 
 function(valhalla_module)
+  set(options VERBOSE)
   set(oneValueArgs NAME)
-  set(multiValueArgs SOURCES HEADERS DEPENDS BUILD_DEPENDS INCLUDE_DIRECTORIES)
+  set(multiValueArgs SOURCES HEADERS DEPENDS BUILD_DEPENDS)
   cmake_parse_arguments(MODULE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   set(library valhalla-${MODULE_NAME})
@@ -64,12 +64,16 @@ function(valhalla_module)
       AUTO_DOWNLOAD=0
     PRIVATE
       $<$<BOOL:${LOGGING_LEVEL}>:LOGGING_LEVEL_${LOGGING_LEVEL}>)
-  target_include_directories(${library} ${MODULE_INCLUDE_DIRECTORIES}
-     PRIVATE
-       ${valhalla_SOURCE_DIR}/src
-       ${valhalla_BINARY_DIR}/src
-       ${valhalla_SOURCE_DIR}/valhalla
-       ${valhalla_BINARY_DIR}/src/valhalla)
+      
+  target_include_directories(${library}
+     PUBLIC
+       $<INSTALL_INTERFACE:include/${${PROJECT_NAME}_INSTALL_FOLDER}>
+     PRIVATE # Added to enable clean,informing includes in the code
+       # such as "module/x.h" or "valhalla/module/x.h", from with in the module
+       ${valhalla_SOURCE_DIR} # Reference from repo root
+       ${valhalla_SOURCE_DIR}/valhalla/ # reference from header root
+       ${valhalla_BINARY_DIR}/src/valhalla # reference generated headers
+       ${CMAKE_CURRENT_BINARY_DIR}) # reference any library specific generated header
 
   if(ENABLE_COVERAGE)
     target_compile_options(${library} PUBLIC -ftest-coverage -fprofile-arcs)
@@ -79,30 +83,22 @@ function(valhalla_module)
     cxx_add_warning_flags(${library})
   endif()
 
-  install(FILES ${MODULE_HEADERS}
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/valhalla/${MODULE_NAME}"
-    COMPONENT development)
-
   if(BUILD_SHARED_LIBS OR ENABLE_PYTHON_BINDINGS)
     set_property(TARGET ${library} PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
+  
+  install(FILES ${MODULE_HEADERS}
+    DESTINATION "include/valhalla/${MODULE_NAME}"
+    COMPONENT Development)
 
   ## Save properties of external dependencies and target objects to propagate to valhalla target
-  string(REGEX REPLACE "(valhalla::[^;]+)" ""
-    external_module_depends "${MODULE_DEPENDS}")
-  string(REGEX REPLACE "(valhalla::[^;]+)" ""
-    external_module_build_depends "${MODULE_BUILD_DEPENDS}")
-  string(REGEX REPLACE
-    "([^;]+)" "$<TARGET_PROPERTY:\\1,INTERFACE_COMPILE_DEFINITIONS>"
-    external_compile_definitions
-    "${external_module_depends};${external_module_build_depends}")
-  string(REGEX REPLACE
-    "([^;]+)" "$<TARGET_PROPERTY:\\1,INTERFACE_INCLUDE_DIRECTORIES>"
-    external_include_directories
-    "${external_module_depends};${external_module_build_depends}")
+  ## https://gitlab.kitware.com/cmake/cmake/-/issues/15415
+  string(REGEX REPLACE "(valhalla::[^;]+)" "" external_module_depends "${MODULE_DEPENDS}")
+  string(REGEX REPLACE "([^;]+)" "$<TARGET_PROPERTY:\\1,INTERFACE_COMPILE_DEFINITIONS>" external_compile_definitions "${external_module_depends}")
+  string(REGEX REPLACE "([^;]+)" "$<TARGET_PROPERTY:\\1,INTERFACE_INCLUDE_DIRECTORIES>" external_include_directories "${external_module_depends}")
   target_compile_definitions(${library} PRIVATE ${external_compile_definitions})
   target_include_directories(${library} PRIVATE ${external_include_directories})
-  foreach(dep IN LISTS MODULE_DEPENDS MODULE_BUILD_DEPENDS)
+  foreach(dep "${MODULE_DEPENDS}")
     if("${dep}" MATCHES "^valhalla::")
       add_dependencies(${library} ${dep})
     endif()
@@ -114,8 +110,6 @@ function(valhalla_module)
   set(libvalhalla_link_objects "${libvalhalla_link_objects};$<TARGET_OBJECTS:${library}>" CACHE INTERNAL "")
   set(libvalhalla_link_libraries "${libvalhalla_link_libraries};${external_module_depends}" CACHE INTERNAL "")
 endfunction()
-
-add_subdirectory(${valhalla_SOURCE_DIR}/third_party/robin-hood-hashing ${CMAKE_BINARY_DIR}/third_party/robin-hood-hashing)
 
 add_subdirectory(../proto ${CMAKE_CURRENT_BINARY_DIR}/valhalla/proto)
 add_subdirectory(baldr)
@@ -178,29 +172,23 @@ if(ENABLE_COMPILER_WARNINGS)
 endif()
 
 target_include_directories(valhalla
-  PUBLIC
-    $<BUILD_INTERFACE:${valhalla_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${valhalla_BINARY_DIR}/src>
-    $<BUILD_INTERFACE:${valhalla_SOURCE_DIR}/third_party/rapidjson/include>
-    $<BUILD_INTERFACE:${valhalla_SOURCE_DIR}/third_party/date/include>
-    $<INSTALL_INTERFACE:include>
-  PRIVATE
-    ${valhalla_SOURCE_DIR}/valhalla
-    ${valhalla_BINARY_DIR}/src/valhalla
-    ${libvalhalla_include_directories})
-
-if(MSVC)
-  target_include_directories(valhalla
-    PUBLIC ${valhalla_SOURCE_DIR}/third_party/dirent/include)
-endif()
+     PUBLIC
+       $<INSTALL_INTERFACE:include/${${PROJECT_NAME}_INSTALL_FOLDER}>
+     PRIVATE # Added to enable clean,informing includes in the code
+       # such as "module/x.h" or "valhalla/module/x.h", from with in the module
+       ${valhalla_SOURCE_DIR} # Reference from repo root
+       ${valhalla_SOURCE_DIR}/valhalla/ # reference from header root # TODO: this path must be removed and changed to #include <valhalla/...> in headers
+       ${valhalla_BINARY_DIR}/src/valhalla # reference generated headers
+       ${CMAKE_CURRENT_BINARY_DIR} # reference any library specific generated header
+       ${libvalhalla_include_directories})
 
 target_link_libraries(valhalla
   PUBLIC
-    ${valhalla_protobuf_targets}
-  PRIVATE
     ${libvalhalla_link_libraries}
-    $<$<BOOL:${ENABLE_COVERAGE}>:gcov>
-    Threads::Threads)
+    Threads::Threads
+  PRIVATE
+    $<$<BOOL:${ENABLE_COVERAGE}>:gcov>)
+    
 if(ENABLE_HTTP OR ENABLE_DATA_TOOLS)
   target_link_libraries(valhalla PUBLIC CURL::libcurl)
 endif()
@@ -219,19 +207,20 @@ set_target_properties(valhalla PROPERTIES
   VERSION "${VALHALLA_VERSION}"
   SOVERSION "${VALHALLA_VERSION_MAJOR}")
 
-set(LIBVALHALLA_SO_LINK ${CMAKE_SHARED_LIBRARY_PREFIX}valhalla${CMAKE_SHARED_LIBRARY_SUFFIX})
 
-install(TARGETS ${VALHALLA_EXPORT_LIBRARIES}
-  EXPORT valhalla_exports
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shared NAMELINK_SKIP
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT development)
+install(TARGETS ${VALHALLA_EXPORT_LIBRARIES} EXPORT valhalla_exports
+  RUNTIME DESTINATION bin COMPONENT RuntimeLibraries
+  LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION lib COMPONENT Development
+)
 
 if(BUILD_SHARED_LIBS)
   install(FILES ${valhalla_SOURCE_DIR}/COPYING ${valhalla_SOURCE_DIR}/CHANGELOG.md
-    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/libvalhalla0"
+    DESTINATION "doc/libvalhalla0"
     COMPONENT shared)
 else()
   if(UNIX)
+    set(LIBVALHALLA_SO_LINK ${CMAKE_SHARED_LIBRARY_PREFIX}valhalla${CMAKE_SHARED_LIBRARY_SUFFIX})
     add_custom_target(${LIBVALHALLA_SO_LINK} ALL
       COMMAND ${CMAKE_COMMAND} -E create_symlink "${LIBVALHALLA_SO_LINK}.${VALHALLA_VERSION_MAJOR}" ${LIBVALHALLA_SO_LINK})
     set_target_properties(${LIBVALHALLA_SO_LINK} PROPERTIES FOLDER "Library")
@@ -239,17 +228,14 @@ else()
 endif()
 
 install(FILES ${valhalla_SOURCE_DIR}/COPYING ${valhalla_SOURCE_DIR}/CHANGELOG.md ${valhalla_SOURCE_DIR}/README.md
-  DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/libvalhalla-dev"
-  COMPONENT development)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBVALHALLA_SO_LINK}
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  COMPONENT development)
+  DESTINATION "doc/libvalhalla-dev"
+  COMPONENT Development)
 
 install(FILES ${valhalla_hdrs}
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/valhalla"
-  COMPONENT development)
+  DESTINATION include/valhalla
+  COMPONENT   Development)
 
+  
 configure_file(
   "${valhalla_SOURCE_DIR}/cmake/valhalla-config.cmake.in"
   "${valhalla_BINARY_DIR}/valhalla-config.cmake"
@@ -259,14 +245,17 @@ export(TARGETS ${VALHALLA_EXPORT_LIBRARIES} NAMESPACE valhalla::
   FILE "${valhalla_BINARY_DIR}/valhalla-targets.cmake")
 
 install(FILES "${valhalla_BINARY_DIR}/valhalla-config.cmake"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/valhalla"
-  COMPONENT development)
+  DESTINATION ${INSTALL_CONFIG_DIR}
+  COMPONENT Development)
+install(FILES "${valhalla_SOURCE_DIR}/cmake/Find.cmake"
+  DESTINATION "${INSTALL_CONFIG_DIR}"
+  COMPONENT Development)
 
 install(EXPORT valhalla_exports
   NAMESPACE valhalla::
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/valhalla"
+  DESTINATION "${INSTALL_CONFIG_DIR}"
   FILE valhalla-targets.cmake
-  COMPONENT development)
+  COMPONENT Development)
 
 if(PKG_CONFIG_FOUND)
   ## Configure libvalhalla.pc file with valhalla target linking options via PkgConfig linker
@@ -280,7 +269,7 @@ if(PKG_CONFIG_FOUND)
   if(NOT \${_res} EQUAL 0)
     message(FATAL_ERROR \"Configuring libvalhalla.pc failed: \${_err}\")
   endif()")
-  install(FILES ${valhalla_BINARY_DIR}/src/libvalhalla.pc
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
-    COMPONENT development)
+  #install(FILES ${valhalla_BINARY_DIR}/src/libvalhalla.pc
+  #  DESTINATION "pkgconfig"
+  #  COMPONENT development)
 endif()

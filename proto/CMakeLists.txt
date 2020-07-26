@@ -15,8 +15,7 @@ valhalla_module(NAME proto
     ${protobuff_srcs}
   HEADERS
     ${protobuff_hdrs}
-  INCLUDE_DIRECTORIES
-    PUBLIC
-      ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS
-    ${valhalla_protobuf_targets})
+    ${valhalla_protobuf_targets}
+  #VERBOSE
+)

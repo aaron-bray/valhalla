@@ -64,6 +64,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+# Install location for all CMake configuration files to go
+set(INSTALL_CONFIG_DIR "lib/cmake/valhalla") 
+
 # colorize output
 include(CheckCXXCompilerFlag)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -152,8 +155,38 @@ if(ENABLE_COVERAGE)
 endif()
 
 ## Dependencies
+set(MSVC_DEPENDS)
+
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
+
+
+# Create Packages for third party header libraries, and install them
+include(Find)
+#message(STATUS "rapidjson includes : ${RAPIDJSON_INCLUDE_DIRS}")
+# date
+set(date_ROOT_DIR ${valhalla_SOURCE_DIR}/third_party/date/include)
+find_header_ex(date date/date.h)
+find_header_package_ex(date)
+install(DIRECTORY ${date_ROOT_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Development)
+# dirent (Windows only)
+if(MSVC)
+  list(APPEND MSVC_DEPENDS dirent) # Add to MSVC Dependencies
+  set(dirent_ROOT_DIR ${valhalla_SOURCE_DIR}/third_party/dirent/include)
+  find_header_ex(dirent dirent.h)
+  find_header_package_ex(dirent)
+  install(DIRECTORY ${dirent_ROOT_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Development)
+endif()
+# rapidjson
+set(rapidjson_ROOT_DIR ${valhalla_SOURCE_DIR}/third_party/rapidjson/include)
+find_header_ex(rapidjson rapidjson/rapidjson.h)
+find_header_package_ex(rapidjson)
+install(DIRECTORY ${rapidjson_ROOT_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Development)
+# robin hood hashing
+set(robin_hood_ROOT_DIR ${valhalla_SOURCE_DIR}/third_party/robin-hood-hashing/src/include)
+find_header_ex(robin_hood robin_hood.h)
+find_header_package_ex(robin_hood)
+install(DIRECTORY ${robin_hood_ROOT_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Development)
 
 if(TARGET CURL::CURL)
   message(STATUS "Using curl from the outside")
@@ -161,15 +194,25 @@ if(TARGET CURL::CURL)
     add_library(CURL::libcurl ALIAS CURL::CURL)
   endif()
 else()
-  if(ENABLE_HTTP OR ENABLE_DATA_TOOLS)
+  if(ENABLE_HTTP OR ENABLE_DATA_TOOLS OR WIN32)
     if(NOT CURL_FOUND)
-      find_package(CURL REQUIRED)
+      if(CURL_DIR)
+        find_package(CURL REQUIRED NO_DEFAULT_PATH)
+      else()
+        find_package(CURL REQUIRED)
+      endif()
     endif()
   endif()
 endif()
 
 if(NOT Protobuf_FOUND)
-  find_package(Protobuf REQUIRED)
+  if(protobuf_DIR)
+    # Use the config written by protobuf
+    set(protobuf_MODULE_COMPATIBLE ON CACHE BOOL "" FORCE)
+    find_package(protobuf REQUIRED CONFIG)
+  else()
+    find_package(Protobuf REQUIRED)
+  endif()
 endif()
 
 message(STATUS "Using pbf headers from ${PROTOBUF_INCLUDE_DIR}")
@@ -219,8 +262,8 @@ else()
   message(FATAL_ERROR "Required target protobuf::libprotobuf-lite or protobuf::libprotobuf is not defined")
 endif()
 
-add_library(libprime_server INTERFACE IMPORTED)
 if(ENABLE_SERVICES)
+  add_library(libprime_server INTERFACE IMPORTED)
   pkg_check_modules(libprime_server REQUIRED libprime_server>=0.6.3)
   # workaround for https://gitlab.kitware.com/cmake/cmake/issues/15804
   find_library(libprime_server_LIBRARY

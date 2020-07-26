@@ -23,14 +23,59 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/date_time_windows_zones.h
   COMMENT "Compiling date_time/windowsZones.xml to date_time_windows_zones.h"
   DEPENDS ${valhalla_SOURCE_DIR}/date_time/windowsZones.xml)
 
-file(GLOB headers ${valhalla_SOURCE_DIR}/valhalla/baldr/*.h)
-
-set(includes
-    ${valhalla_SOURCE_DIR}
-     ${valhalla_SOURCE_DIR}/valhalla
-     $<$<BOOL:${MSVC}>:${valhalla_SOURCE_DIR}/third_party/dirent/include>
-     ${valhalla_SOURCE_DIR}/third_party/rapidjson/include
-     ${valhalla_SOURCE_DIR}/third_party/date/include)
+set(headers
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/accessrestriction.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/admin.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/admininfo.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/complexrestriction.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/compression_utils.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/connectivity_map.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/curler.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/curl_tilegetter.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/datetime.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/directededge.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/double_bucket_queue.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/edgeinfo.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/edgetracker.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/graphconstants.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/graphid.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/graphreader.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/graphtile.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/graphtileheader.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/json.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/laneconnectivity.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/location.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/merge.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/nodeinfo.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/nodetransition.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/openlr.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/pathlocation.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/predictedspeeds.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/rapidjson_utils.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/sign.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/signinfo.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/streetname.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/streetnames.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/streetnames_factory.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/streetnames_us.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/streetname_us.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/tilegetter.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/tilehierarchy.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/timedomain.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/time_info.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/traffictile.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/transitdeparture.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/transitroute.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/transitschedule.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/transitstop.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/transittransfer.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/turn.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/turnlanes.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/verbal_text_formatter.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/verbal_text_formatter_factory.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/verbal_text_formatter_us.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/verbal_text_formatter_us_co.h
+    ${valhalla_SOURCE_DIR}/valhalla/baldr/verbal_text_formatter_us_tx.h)
 
 set(sources
     accessrestriction.cc
@@ -70,7 +115,7 @@ set(sources
     verbal_text_formatter_factory.cc)
 
 #basic timezone stuff
-list(APPEND sources
+list(APPEND headers
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_africa.h
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_antarctica.h
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_asia.h
@@ -83,31 +128,25 @@ list(APPEND sources
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_pacificnew.h
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_southamerica.h
     ${CMAKE_CURRENT_BINARY_DIR}/date_time_systemv.h
-    ${CMAKE_CURRENT_BINARY_DIR}/date_time_windows_zones.h
-    tz_alt.cpp)
+    ${CMAKE_CURRENT_BINARY_DIR}/date_time_windows_zones.h)
+list(APPEND sources tz_alt.cpp)
 
 #ios we have more work to make use of system tzdb
 if(APPLE)
-  list(APPEND includes ${valhalla_SOURCE_DIR}/third_party/date/include/date)
   list(APPEND sources ${valhalla_SOURCE_DIR}/third_party/date/src/ios.mm)
 endif()
 
 valhalla_module(NAME baldr
   SOURCES
     ${sources}
-
   HEADERS
     ${headers}
-  INCLUDE_DIRECTORIES
-    PUBLIC
-      ${includes}
-    PRIVATE
-      ${CMAKE_CURRENT_BINARY_DIR}
-
   DEPENDS
+    rapidjson
+    date
     valhalla::midgard
     valhalla::proto
-    ${valhalla_protobuf_targets}
     Boost::boost
-    CURL::libcurl
-    ZLIB::ZLIB)
+    ZLIB::ZLIB
+  #VERBOSE
+)

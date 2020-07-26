@@ -1,4 +1,6 @@
-file(GLOB headers ${valhalla_SOURCE_DIR}/valhalla/tyr/*.h)
+set(headers
+    ${valhalla_SOURCE_DIR}/valhalla/tyr/actor.h
+    ${valhalla_SOURCE_DIR}/valhalla/tyr/serializers.h)
 
 valhalla_module(NAME tyr
   SOURCES
@@ -15,19 +17,10 @@ valhalla_module(NAME tyr
     actor.cc
   HEADERS
     ${headers}
-  INCLUDE_DIRECTORIES
-    PUBLIC
-      ${valhalla_SOURCE_DIR}
-      ${valhalla_SOURCE_DIR}/valhalla
-      ${valhalla_SOURCE_DIR}/third_party/date/include
-      $<$<BOOL:${MSVC}>:${valhalla_SOURCE_DIR}/third_party/dirent/include>
-    PRIVATE
-      ${valhalla_SOURCE_DIR}/third_party/rapidjson/include
-      ${CMAKE_BINARY_DIR}
   DEPENDS
     valhalla::loki
     valhalla::thor
     valhalla::odin
     valhalla::proto
-    ${valhalla_protobuf_targets}
-    Boost::boost)
+    Boost::boost
+    ${valhalla_protobuf_targets})
