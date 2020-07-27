@@ -32,4 +32,5 @@ valhalla_module(NAME sif
     valhalla::proto
     date
     rapidjson
-    Boost::boost)
+    Boost::boost
+    ${MSVC_DEPENDS})

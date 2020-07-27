@@ -142,11 +142,12 @@ valhalla_module(NAME baldr
   HEADERS
     ${headers}
   DEPENDS
-    rapidjson
-    date
     valhalla::midgard
     valhalla::proto
+    date
+    rapidjson
     Boost::boost
     ZLIB::ZLIB
+    ${MSVC_DEPENDS}
   #VERBOSE
 )

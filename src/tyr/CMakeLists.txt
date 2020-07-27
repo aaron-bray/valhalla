@@ -23,4 +23,7 @@ valhalla_module(NAME tyr
     valhalla::odin
     valhalla::proto
     Boost::boost
+    date
+    rapidjson
+    ${MSVC_DEPENDS}
     ${valhalla_protobuf_targets})

@@ -9,4 +9,5 @@ valhalla_module(NAME skadi
   DEPENDS
     valhalla::baldr
     Boost::boost
-    ZLIB::ZLIB)
+    ZLIB::ZLIB
+    ${MSVC_DEPENDS})

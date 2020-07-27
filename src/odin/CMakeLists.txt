@@ -41,8 +41,8 @@ valhalla_module(NAME odin
   HEADERS ${headers}
   DEPENDS
     valhalla::proto
-    ${MSVC_DEPENDS}
     date
     rapidjson
     Boost::boost
+    ${MSVC_DEPENDS}
     ${valhalla_protobuf_targets})

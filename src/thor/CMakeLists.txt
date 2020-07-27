@@ -53,5 +53,6 @@ valhalla_module(NAME thor
     rapidjson
     robin_hood
     Boost::boost
+    ${MSVC_DEPENDS}
   #VERBOSE
 )

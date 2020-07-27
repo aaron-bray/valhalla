@@ -31,6 +31,8 @@ valhalla_module(NAME meili
   SOURCES ${sources}
   HEADERS ${headers}
   DEPENDS
-    date
     valhalla::sif
-    Boost::boost)
+    date
+    rapidjson
+    Boost::boost
+    ${MSVC_DEPENDS})
