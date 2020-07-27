@@ -34,6 +34,8 @@ project(valhalla LANGUAGES CXX C VERSION ${VALHALLA_VERSION})
 
 include(FindPkgConfig)
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+set(export_config_name ${PROJECT_NAME})
 
 if(CMAKE_VERSION VERSION_LESS 3.14)
   list(INSERT CMAKE_MODULE_PATH 0 ${valhalla_SOURCE_DIR}/cmake/future/3.14)

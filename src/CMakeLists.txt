@@ -72,6 +72,7 @@ function(valhalla_module)
        # such as "module/x.h" or "valhalla/module/x.h", from with in the module
        ${valhalla_SOURCE_DIR} # Reference from repo root
        ${valhalla_SOURCE_DIR}/valhalla/ # reference from header root
+       ${valhalla_BINARY_DIR}/src/ # reference generated headers
        ${valhalla_BINARY_DIR}/src/valhalla # reference generated headers
        ${CMAKE_CURRENT_BINARY_DIR}) # reference any library specific generated header
 
@@ -236,10 +237,10 @@ install(FILES ${valhalla_hdrs}
   COMPONENT   Development)
 
   
-configure_file(
+configure_package_config_file(
   "${valhalla_SOURCE_DIR}/cmake/valhalla-config.cmake.in"
   "${valhalla_BINARY_DIR}/valhalla-config.cmake"
-  @ONLY)
+  INSTALL_DESTINATION "${PROJECT_BINARY_DIR}")
 
 export(TARGETS ${VALHALLA_EXPORT_LIBRARIES} NAMESPACE valhalla::
   FILE "${valhalla_BINARY_DIR}/valhalla-targets.cmake")
