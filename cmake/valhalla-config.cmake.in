@@ -29,7 +29,7 @@ endif()
 
 
 # Find all required packages
-include(Find)
+include(${CMAKE_CURRENT_LIST_DIR}/Find.cmake)
 include(CMakeFindDependencyMacro)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/modules" "${CMAKE_MODULE_PATH}")
 
@@ -53,6 +53,7 @@ find_header_ex(robin_hood robin_hood.h)
 find_header_package_ex(robin_hood)
 
 find_package(Threads REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # Protobuf
 if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/protobuf-config.cmake")
