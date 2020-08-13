@@ -27,4 +27,6 @@ valhalla_module(NAME loki
     Boost::boost
     date
     rapidjson
-    ${MSVC_DEPENDS})
+    ${MSVC_DEPENDS}
+    ${valhalla_protobuf_targets}
+)

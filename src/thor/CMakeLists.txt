@@ -54,5 +54,6 @@ valhalla_module(NAME thor
     robin_hood
     Boost::boost
     ${MSVC_DEPENDS}
+    ${valhalla_protobuf_targets}
   #VERBOSE
 )

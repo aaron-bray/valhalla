@@ -149,5 +149,6 @@ valhalla_module(NAME baldr
     Boost::boost
     ZLIB::ZLIB
     ${MSVC_DEPENDS}
+    ${valhalla_protobuf_targets}
   #VERBOSE
 )

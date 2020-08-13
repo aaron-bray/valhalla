@@ -35,4 +35,6 @@ valhalla_module(NAME meili
     date
     rapidjson
     Boost::boost
-    ${MSVC_DEPENDS})
+    ${MSVC_DEPENDS}
+    ${valhalla_protobuf_targets}
+)
